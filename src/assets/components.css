@@ -1,0 +1,124 @@
+/* src/assets/components.css */
+
+/* --- 1. Header Styles --- */
+.app-header {
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 1rem;
+}
+
+.app-header h1 {
+  font-size: 2rem;
+  font-weight: 600;
+}
+
+.app-header p {
+  font-size: 1rem;
+  color: var(--secondary-text);
+  margin-top: 0.25rem;
+}
+
+/* --- 2. Quality Score Component --- */
+.quality-score-card {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem 2rem;
+  border: 1px solid var(--border-color);
+  text-align: center;
+}
+
+.quality-score-title {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--secondary-text);
+}
+
+.quality-score-value-container {
+  margin: 1rem 0;
+  /* We use flex to align the score and text */
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.quality-score-value {
+  font-size: 4rem;
+  font-weight: 700;
+  color: var(--accent-color); /* We'll make this dynamic later */
+  line-height: 1;
+}
+
+.quality-score-text {
+  font-size: 1.75rem;
+  font-weight: 500;
+  color: var(--accent-color); /* We'll make this dynamic later */
+}
+
+.quality-score-info {
+  font-size: 0.9rem;
+  color: var(--secondary-text);
+}
+
+
+/* --- 3. Data Card Component --- */
+.data-card {
+  background-color: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.5rem;
+  border: 1px solid var(--border-color);
+}
+
+.card-title {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--secondary-text);
+}
+
+.card-value {
+  font-size: 2.5rem;
+  font-weight: 600;
+  margin-top: 0.75rem;
+  line-height: 1;
+}
+
+.card-unit {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--secondary-text);
+  margin-left: 0.5rem;
+}
+
+/* --- 4. Dynamic Quality Score Colors --- */
+
+/* Default / Loading State */
+.quality-score-card.quality-loading .quality-score-value,
+.quality-score-card.quality-loading .quality-score-text {
+  color: var(--secondary-text);
+}
+
+/* Good Quality - Green */
+.quality-score-card.quality-good {
+  border-color: #38a169; /* Green border */
+}
+.quality-score-card.quality-good .quality-score-value,
+.quality-score-card.quality-good .quality-score-text {
+  color: #48bb78; /* Green text */
+}
+
+/* Moderate Quality - Yellow */
+.quality-score-card.quality-moderate {
+  border-color: #d69e2e; /* Yellow border */
+}
+.quality-score-card.quality-moderate .quality-score-value,
+.quality-score-card.quality-moderate .quality-score-text {
+  color: #ecc94b; /* Yellow text */
+}
+
+/* Poor Quality - Red */
+.quality-score-card.quality-poor {
+  border-color: #c53030; /* Red border */
+}
+.quality-score-card.quality-poor .quality-score-value,
+.quality-score-card.quality-poor .quality-score-text {
+  color: #f56565; /* Red text */
+}

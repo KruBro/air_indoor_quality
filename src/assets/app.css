@@ -1,0 +1,66 @@
+/* src/assets/app.css */
+
+/* --- 1. Global Reset & Base Styles --- */
+:root {
+  --bg-color: #1a1a1a;
+  --card-bg: #242424;
+  --primary-text: #ffffff;
+  --secondary-text: #aaaaaa;
+  --accent-color: #00bcd4;
+  --border-color: #333333;
+
+  --font-main: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
+    Arial, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-main);
+  background-color: var(--bg-color);
+  color: var(--primary-text);
+  min-height: 100vh;
+}
+
+/* --- 2. Main App Layout --- */
+.app-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+main {
+  margin-top: 2rem;
+}
+
+/* --- 3. Responsive Dashboard Grid --- */
+/* This is key for responsiveness */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* Default: 1 column for mobile */
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+
+/* --- 4. Media Queries for Responsiveness --- */
+
+/* For tablets and small laptops */
+@media (min-width: 600px) {
+  .dashboard-grid {
+    /* 2 columns on tablets */
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* For desktops */
+@media (min-width: 900px) {
+  .dashboard-grid {
+    /* 4 columns on large screens */
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
