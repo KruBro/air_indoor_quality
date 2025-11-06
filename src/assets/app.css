@@ -60,7 +60,18 @@ main {
 /* For desktops */
 @media (min-width: 900px) {
   .dashboard-grid {
-    /* 4 columns on large screens */
-    grid-template-columns: repeat(4, 1fr);
+    /* This is a common, clean way to handle 5 items.
+      It will create a 3-column grid and the last row
+      will just have two items centered.
+    */
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* For very large desktops (optional, but looks nice) */
+@media (min-width: 1200px) {
+  .dashboard-grid {
+    /* We can fit 5 columns on very wide screens */
+    grid-template-columns: repeat(5, 1fr);
   }
 }

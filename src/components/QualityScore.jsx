@@ -22,4 +22,5 @@ function QualityScore({ score, quality }) {
   )
 }
 
+
 export default QualityScore

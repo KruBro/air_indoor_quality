@@ -1,82 +1,152 @@
 // src/App.jsx
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import Header from './components/Header'
 import QualityScore from './components/QualityScore'
 import DataCard from './components/DataCard'
-
-// We'll import our component-specific styles here
 import './assets/components.css'
 
-// IMPORTANT: Replace this with your ESP32's IP address
-const ESP32_WEBSOCKET_URL = 'ws://192.168.1.5/ws'; 
+// ==========================================================
+// CONNECTION + SECURITY CONFIG
+// ==========================================================
+
+const ESP32_WEBSOCKET_URL = 'ws://10.246.209.77/ws'
+
+// ⚠️ Must match WS_BEARER_TOKEN on ESP32
+const WS_BEARER_TOKEN = "f2c7c683b9154bb7de99ca6a73b40a791053f1c968ce2d735e879fe9259ed54e";
+
+// ==========================================================
+// SENSOR QUALITY THRESHOLDS — Must match ESP32 logic
+// ==========================================================
+const IAQ_BAD = 150;
+const IAQ_OK = 75;
+const DUST_BAD = 1000;
+const DUST_OK = 500;
 
 function App() {
-  // Use useState to hold our sensor data
   const [sensorData, setSensorData] = useState({
     temperature: 0,
     humidity: 0,
     pressure: 0,
     gas: 0,
     iaq: 0,
-    iaqQuality: "loading", // This will be "Good", "Moderate", etc.
+    dust: 0,
+    iaqQuality: "loading",
   });
 
-  // Use useEffect to connect to the WebSocket on component mount
+  const [connectionStatus, setConnectionStatus] = useState("connecting...");
+  const wsRef = useRef(null);
+  const reconnectTimer = useRef(null);
+  const hasAuthenticated = useRef(false);
+
+  // ==========================================================
+  // WebSocket Connection + Auth Logic (Fixed Reauth)
+  // ==========================================================
   useEffect(() => {
-    console.log("Connecting to WebSocket...");
-    const ws = new WebSocket(ESP32_WEBSOCKET_URL);
+    function connectWS() {
+      console.log(`Attempting WebSocket connection at: ${ESP32_WEBSOCKET_URL}`);
+      const ws = new WebSocket(ESP32_WEBSOCKET_URL);
+      wsRef.current = ws;
 
-    ws.onopen = () => {
-      console.log("WebSocket Connected!");
-    };
+      ws.onopen = () => {
+        console.log("✅ WebSocket Connected!");
+        setConnectionStatus("connected - authenticating...");
 
-    ws.onmessage = (event) => {
-      // The ESP32 will send data as a JSON string
-      const data = JSON.parse(event.data);
-      console.log("Received data:", data);
+        if (!hasAuthenticated.current) {
+          ws.send(JSON.stringify({
+            type: "auth",
+            token: WS_BEARER_TOKEN
+          }));
+          hasAuthenticated.current = true;
+          console.log("🔐 Sent authentication token once");
+        }
+      };
 
-      // --- Logic to determine air quality ---
-      let qualityText = "loading...";
-      if (data.iaq <= 100) {
-        qualityText = "Good";
-      } else if (data.iaq <= 200) {
-        qualityText = "Moderate";
-      } else {
-        qualityText = "Poor";
-      }
-      
-      // Update our React state with the new data
-      setSensorData({
-        temperature: data.temp || 0,
-        humidity: data.hum || 0,
-        pressure: data.pres || 0,
-        gas: data.gas || 0,
-        iaq: data.iaq || 0,
-        iaqQuality: qualityText,
-      });
-    };
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          console.log("📦 Received:", data);
 
-    ws.onclose = () => {
-      console.log("WebSocket Disconnected.");
-    };
+          if (data.ok && data.msg === "auth_ok") {
+            console.log("🔓 Authentication successful!");
+            setConnectionStatus("authenticated");
+            return;
+          }
 
-    ws.onerror = (error) => {
-      console.error("WebSocket Error:", error);
-    };
+          if (data.error) {
+            console.warn("⚠️ Server Error:", data.error);
+            if (data.error === "invalid_token" || data.error === "unauthorized") {
+              hasAuthenticated.current = false; // reset for next reconnect
+            }
+            return;
+          }
 
-    // This "cleanup" function runs when the component unmounts
+          const iaq = data.iaq || 0;
+          const dust = data.dust || 0;
+
+          let qualityText = "loading";
+          if (iaq > IAQ_BAD || dust > DUST_BAD) {
+            qualityText = "Poor";
+          } else if (iaq > IAQ_OK || dust > DUST_OK) {
+            qualityText = "Moderate";
+          } else {
+            qualityText = "Good";
+          }
+
+          setSensorData({
+            temperature: data.temp || 0,
+            humidity: data.hum || 0,
+            pressure: data.pres || 0,
+            gas: data.gas || 0,
+            iaq: iaq,
+            dust: dust,
+            iaqQuality: qualityText,
+          });
+        } catch (err) {
+          console.error("❌ JSON parse error:", err);
+        }
+      };
+
+      ws.onerror = (error) => {
+        console.error("WebSocket Error:", error);
+        setConnectionStatus("connection error");
+      };
+
+      ws.onclose = () => {
+        console.warn("⚠️ WebSocket Disconnected. Retrying in 5s...");
+        setConnectionStatus("disconnected - retrying...");
+        hasAuthenticated.current = false; // allow auth again on reconnect
+
+        reconnectTimer.current = setTimeout(() => {
+          if (ws.readyState === ws.CLOSED) {
+            console.log("🔁 Attempting reconnection...");
+            connectWS();
+          }
+        }, 5000);
+      };
+    }
+
+    connectWS();
+
+    // Cleanup when component unmounts
     return () => {
-      ws.close();
+      if (reconnectTimer.current) clearTimeout(reconnectTimer.current);
+      if (wsRef.current) wsRef.current.close();
     };
-  }, []); // The empty array [] means this effect runs only once
+  }, []);
 
+  // ==========================================================
+  // UI
+  // ==========================================================
   return (
     <div className="app-container">
       <Header />
-      
+
       <main>
-        {/* Pass the live data down to our components as props */}
+        <h4 style={{ textAlign: 'center', color: '#555' }}>
+          Status: {connectionStatus}
+        </h4>
+
         <QualityScore 
           score={sensorData.iaq.toFixed(0)} 
           quality={sensorData.iaqQuality} 
@@ -94,6 +164,11 @@ function App() {
             unit="%" 
           />
           <DataCard 
+            title="Dust Sensor" 
+            value={sensorData.dust.toFixed(0)} 
+            unit="Raw" 
+          />
+          <DataCard 
             title="Pressure" 
             value={sensorData.pressure.toFixed(1)} 
             unit="hPa" 
@@ -106,7 +181,7 @@ function App() {
         </div>
       </main>
     </div>
-  )
+  );
 }
 
-export default App
+export default App;
