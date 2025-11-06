@@ -13,7 +13,7 @@ import './assets/components.css'
 const ESP32_WEBSOCKET_URL = 'ws://10.246.209.77/ws'
 
 // ⚠️ Must match WS_BEARER_TOKEN on ESP32
-const WS_BEARER_TOKEN = "f2c7c683b9154bb7de99ca6a73b40a791053f1c968ce2d735e879fe9259ed54e";
+const WS_BEARER_TOKEN = "f2c7c683b9154bb7de99ca6a73b40a791053f1c968ce2d735e879fe9259ed54e"; // create your own token please make sure of that.
 
 // ==========================================================
 // SENSOR QUALITY THRESHOLDS — Must match ESP32 logic
